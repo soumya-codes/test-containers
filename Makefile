@@ -1,4 +1,8 @@
-.PHONY: up down down-v redis redis-down postgres postgres-down mysql mysql-down redis-client redis-client-down postgres-client postgres-client-down mysql-client mysql-client-down
+.PHONY: up down down-v redis redis-down postgres postgres-down mysql mysql-down redis-client redis-client-down postgres-client postgres-client-down mysql-client mysql-client-down dice-cli dice-cli-host dice-cli-down dice dice-down
+
+IP ?= host.docker.internal # DNS name of the host machine on MAC and Windows
+PORT ?= 7379
+HOST_TYPE ?= macos # Allowed HOST_TYPEs = linux, macos, windows
 
 # Bring up all services
 up:
@@ -63,11 +67,25 @@ mysql-client:
 mysql-client-down:
 	docker-compose down -v mysql-client
 
-# Bring up only Dice DB CLI client and log into its shell
+# Bring up Dice DB CLI container and connect to Dice-DB 
 dice-cli:
-	docker-compose up -d dice-cli
-	docker exec -it dice-cli-client bash
+	HOST_TYPE=$(HOST_TYPE) docker-compose up -d dice-cli
+	docker exec -it dice-cli /bin/bash -c "/app/connect.sh $(IP) $(PORT)"
 
-# Bring down only MySQL client and remove volumes
+# Bring up Dice DB CLI container and connect to Dice-DB running on host machine, port 7379
+dice-cli-host:
+	HOST_TYPE=$(HOST_TYPE) docker-compose up -d dice-cli
+	docker exec -it dice-cli /bin/bash -c "/app/connect.sh"
+
+# Bring down dice-cli container
 dice-cli-down:
 	docker-compose down -v dice-cli
+
+# Bring up Dice DB and Dice CLI containers and connect to DICE DB from Dice CLI container
+dice:
+	docker-compose up -d dice dice-cli
+	docker exec -it dice-cli /bin/bash -c "/app/connect.sh dice 7379"
+
+# Bring down Dice DB and Dice CLI containers 
+dice-down:
+	docker-compose down -v dice-cli dice

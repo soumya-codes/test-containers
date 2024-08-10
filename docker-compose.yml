@@ -45,8 +45,17 @@ services:
     container_name: mysql-client
     command: sh -c "while true; do sleep 1000; done"
 
+  dice:
+    image: dicedb/dice-server
+    container_name: dice-db
+    ports:
+      - "7379:7379"
+
   dice-cli:
     build: ./dicecli
-    container_name: dice-cli-client
+    container_name: dice-cli
     working_dir: /app
-    command: bash -c "while true; do sleep 3000; done"
+    environment:
+      HOST_TYPE: ${HOST_TYPE:-linux}
+    #network_mode: "host" // # Uncomment this line if facing connectivity issues
+    command: bash -c "while true; do sleep 3600; done"
